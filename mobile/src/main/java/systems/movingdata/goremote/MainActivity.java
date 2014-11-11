@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -22,6 +24,7 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -34,12 +37,21 @@ public class MainActivity extends Activity {
     private static final String TAG = "CompannonActivity";
     Listeners myListeners;
     private static final String START_ACTIVITY_PATH = "/start-activity";
+    private static final String DATA_ACTIVITY_PATH = "/data";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         myListeners = new Listeners();
+        Button send = (Button)findViewById(R.id.button);
+        send.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new StartWearableActivityTask("TestMode","testing 123").execute();
+            }
+
+            });
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
                 .addConnectionCallbacks(new ConnectionCallbacks())
@@ -128,12 +140,22 @@ public class MainActivity extends Activity {
     }
 
     private class StartWearableActivityTask extends AsyncTask<Void, Void, Void> {
+        String ACTIVITY_PATH;
+        byte[] ACTIVITY_DATA;
+        private StartWearableActivityTask( String PATH, String Data) {
+            this.ACTIVITY_PATH = PATH;
+            if(Data.length() > 0) {
+                this.ACTIVITY_DATA = Data.getBytes(Charset.forName("UTF-8"));
+            }else{
+                this.ACTIVITY_DATA = new byte[0];
+            }
+        }
 
         @Override
         protected Void doInBackground(Void... args) {
             Collection<String> nodes = getNodes();
             for (String node : nodes) {
-                sendStartActivityMessage(node);
+                sendStartActivityMessage(node, this.ACTIVITY_PATH, this.ACTIVITY_DATA );
             }
             return null;
         }
@@ -145,7 +167,7 @@ public class MainActivity extends Activity {
         connectGoPro();
         // Trigger an AsyncTask that will query for a list of connected nodes and send a
         // "start-activity" message to each connected node.
-        new StartWearableActivityTask().execute();
+        new StartWearableActivityTask(START_ACTIVITY_PATH,"").execute();
     }
 
 
@@ -161,9 +183,9 @@ public class MainActivity extends Activity {
         wifiManager.reconnect();
     }
 
-    private void sendStartActivityMessage(String node) {
+    private void sendStartActivityMessage(String node, String ACTIVITY_PATH, byte[] by ) {
         Wearable.MessageApi.sendMessage(
-                mGoogleApiClient, node, START_ACTIVITY_PATH, new byte[0]).setResultCallback(
+                mGoogleApiClient, node, ACTIVITY_PATH, by).setResultCallback(
                 new ResultCallback<SendMessageResult>() {
                     @Override
                     public void onResult(SendMessageResult sendMessageResult) {

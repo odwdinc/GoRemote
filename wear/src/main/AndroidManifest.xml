@@ -21,6 +21,7 @@
 
         <activity
             android:name="systems.movingdata.goremote.MainActivity"
+            android:launchMode="singleTask"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,6 +33,7 @@
             android:name="systems.movingdata.goremote.Notafacation"
             android:label="@string/title_activity_notafacation"
             android:allowEmbedded="true"
+            android:launchMode="singleTask"
             android:exported="true"
             android:taskAffinity="" >
             <intent-filter>

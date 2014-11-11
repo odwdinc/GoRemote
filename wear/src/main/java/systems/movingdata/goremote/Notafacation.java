@@ -1,39 +1,63 @@
 package systems.movingdata.goremote;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.wearable.view.WatchViewStub;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class Notafacation extends Activity {
+import com.google.android.gms.wearable.Wearable;
+
+public class Notafacation extends MyActivity {
 
     private TextView mTextView;
-    String Line1 = "";
+    DataManager myDataManager;
+    Bundle DataBul;
+    String TAG = "Notafacation";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
 
-        if (intent.hasExtra("test") ){
-            Line1 = intent.getStringExtra("test");
-        }
-        Log.d("Notafacation",intent.getExtras().keySet().toString());
+        DataBul = intent.getExtras();
+        setContentView(R.layout.activity_main);
+        myDataManager = new DataManager(this);
 
-         setContentView(R.layout.activity_main);
         final WatchViewStub stub = (WatchViewStub) findViewById(R.id.watch_view_stub);
         stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 mTextView = (TextView) stub.findViewById(R.id.TestMode);
-                mTextView.setText(Line1);
                 LinearLayout ButtonLayout = (LinearLayout) stub.findViewById(R.id.ButtonLayout);
                 ButtonLayout.setVisibility(View.GONE);
+                UpdateGui(DataBul);
             }
         });
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        myDataManager.mGoogleApiClient.connect();
+    }
+
+
+    @Override
+    protected void onStop() {
+        Wearable.MessageApi.removeListener(myDataManager.mGoogleApiClient, myDataManager);
+        Wearable.NodeApi.removeListener(myDataManager.mGoogleApiClient, myDataManager);
+        myDataManager.mGoogleApiClient.disconnect();
+        super.onStop();
+    }
+
+
+    @Override
+    void UpdateGui(Bundle data){
+        if (data.containsKey("TestMode")){
+            mTextView.setText(data.getString("TestMode"));
+        }
     }
 }
