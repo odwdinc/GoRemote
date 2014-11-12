@@ -2,7 +2,10 @@ package systems.movingdata.goremote;
 
 import android.app.Activity;
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.wifi.WifiConfiguration;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,7 +13,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -24,9 +30,18 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONObject;
+
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 
 
 public class MainActivity extends Activity {
@@ -36,19 +51,27 @@ public class MainActivity extends Activity {
     private boolean mResolvingError = false;
     private static final String TAG = "CompannonActivity";
     Listeners myListeners;
+    Spinner sSpinner;
     private static final String START_ACTIVITY_PATH = "/start-activity";
     private static final String DATA_ACTIVITY_PATH = "/data";
-
+    List<String> Wifilist;
+    int netIdBackUp;
+    int ItemSelected;
+    Button ConectSend;
+    SGoPo Gotask;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         myListeners = new Listeners();
-        Button send = (Button)findViewById(R.id.button);
-        send.setOnClickListener(new View.OnClickListener() {
+        ConectSend = (Button)findViewById(R.id.button);
+        sSpinner=(Spinner)findViewById(R.id.spinner);
+        ConectSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                new StartWearableActivityTask("TestMode","testing 123").execute();
+                Log.d(TAG, "onClick "+ItemSelected);
+                connectWifi(ItemSelected);
+                new CheckForConectionTask(ItemSelected).execute();
             }
 
             });
@@ -57,6 +80,9 @@ public class MainActivity extends Activity {
                 .addConnectionCallbacks(new ConnectionCallbacks())
                 .addOnConnectionFailedListener(new ConnectionFailedListener())
                 .build();
+        customHandler = new android.os.Handler();
+        getCurrentSsid();
+
     }
 
 
@@ -72,7 +98,6 @@ public class MainActivity extends Activity {
         super.onStart();
         if (!mResolvingError) {
             mGoogleApiClient.connect();
-            onStartWearableActivity();
         }
     }
 
@@ -83,6 +108,10 @@ public class MainActivity extends Activity {
             Wearable.MessageApi.removeListener(mGoogleApiClient, myListeners);
             Wearable.NodeApi.removeListener(mGoogleApiClient, myListeners);
             mGoogleApiClient.disconnect();
+        }
+        connectWifi(netIdBackUp);
+        if(Gotask != null) {
+            Gotask.cancel(true);
         }
         super.onStop();
     }
@@ -164,23 +193,33 @@ public class MainActivity extends Activity {
     /** Sends an RPC to start a fullscreen Activity on the wearable. */
     public void onStartWearableActivity() {
         Log.d(TAG, "Generating RPC");
-        connectGoPro();
+
         // Trigger an AsyncTask that will query for a list of connected nodes and send a
         // "start-activity" message to each connected node.
         new StartWearableActivityTask(START_ACTIVITY_PATH,"").execute();
     }
 
 
-    public void connectGoPro(){
-        WifiConfiguration wifiConfig = new WifiConfiguration();
-        wifiConfig.SSID = String.format("\"%s\"", "00101010_11001");
-        wifiConfig.preSharedKey = String.format("\"%s\"", "adored20");
+    public void connectWifi(int netId){
         WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
-//remember id
-        int netId = wifiManager.addNetwork(wifiConfig);
+        final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
+
+        if (connectionInfo != null && !(connectionInfo.getSSID().equals(""))) {
+            //if (connectionInfo != null && !StringUtil.isBlank(connectionInfo.getSSID())) {
+            if (Wifilist.indexOf(connectionInfo.getSSID()) ==  netId){
+
+                return;
+            }else{
+                netIdBackUp = Wifilist.indexOf(connectionInfo.getSSID());
+            }
+        }
         wifiManager.disconnect();
+        Log.d(TAG, "disconnect");
+        ConectSend.setText("Connecting");
+        ConectSend.setEnabled(false);
         wifiManager.enableNetwork(netId, true);
         wifiManager.reconnect();
+        Log.d(TAG, "reconnect");
     }
 
     private void sendStartActivityMessage(String node, String ACTIVITY_PATH, byte[] by ) {
@@ -236,6 +275,162 @@ public class MainActivity extends Activity {
                         .getRequestId() + " " + messageEvent.getPath());
             }
         }
+
+    }
+    private class CheckForConectionTask extends AsyncTask<Void, Void, Void> {
+        int ExpectedID;
+        private CheckForConectionTask(int ID) {
+            ExpectedID = ID;
+        }
+
+        @Override
+        protected Void doInBackground(Void... args) {
+            checkForConection();
+            return null;
+        }
+
+        void checkForConection(){
+
+            ConnectivityManager connManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            WifiManager wifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+            Log.d(TAG, "Connecteding:");
+
+            while (!networkInfo.isConnected()) {
+                networkInfo = connManager.getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+            }
+
+            final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Finished(ExpectedID == Wifilist.indexOf(connectionInfo.getSSID()));
+                    }
+                });
+            Log.d(TAG, "isConnected:" + connectionInfo.getSSID());
+        }
+    }
+
+    private class SGoPo extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... args) {
+           if(checkForGoPro()) {
+               ProseesStatus();
+           }
+            return null;
+        }
+    }
+
+
+    void updateMessage(final String message){
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run () {
+                ConectSend.setText(message);
+            }
+        });
+    }
+    boolean checkForGoPro(){
+        updateMessage("Looking for Gopro...");
+
+        JSONObject jObject = getJson("http://10.5.5.9/gp/gpControl/status");
+        if (jObject != null) {
+                Log.v(TAG, "gpControl/status: \n" + jObject.toString());
+            updateMessage("Found Gopro...");
+
+        }else{
+            updateMessage("Not Found, Plese check Network...");
+        }
+        return  (jObject != null);
+
+    }
+    android.os.Handler customHandler;
+
+    void ProseesStatus(){
+        updateMessage("Syncing Status...");
+        while (true) {
+            JSONObject jObject = getJson("http://10.5.5.9/gp/gpControl/status");
+            if (jObject != null) {
+                Log.v(TAG, "Status: \n" + jObject.toString());
+            }
+            try {
+                Thread.sleep(500);
+            }catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+
+
+    JSONObject getJson(String Url){
+        JSONObject jObject = null;
+        try {
+            HttpClient client = new DefaultHttpClient();
+            HttpGet request = new HttpGet(Url);
+            // Get the response
+            ResponseHandler<String> responseHandler = new BasicResponseHandler();
+            String response_str = client.execute(request, responseHandler);
+
+            jObject = new JSONObject(response_str);
+
+        } catch (Exception e) {
+            Log.v(TAG, "Oops: \n" );
+        }
+
+        return jObject;
+    }
+
+    void Finished(boolean CorectNetwork){
+        ConectSend.setEnabled(true);
+        if(Gotask != null) {
+            Gotask.cancel(true);
+        }
+        if (CorectNetwork){
+            ConectSend.setText("Connected");
+            onStartWearableActivity();
+            Gotask = new SGoPo();
+            Gotask.execute();
+
+        }else{
+            ConectSend.setText("Error try another");
+        }
+    }
+
+    public void getCurrentSsid() {
+
+
+        final WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+
+
+        // List stored networks
+        List<WifiConfiguration> configs = wifiManager.getConfiguredNetworks();
+        Wifilist = new ArrayList<String>();
+        for (WifiConfiguration config : configs) {
+            Wifilist.add(config.networkId,config.SSID);
+        }
+        ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>
+                (this, android.R.layout.simple_list_item_activated_1,Wifilist);
+        dataAdapter.setDropDownViewResource
+                (android.R.layout.simple_spinner_dropdown_item);
+        sSpinner.setAdapter(dataAdapter);
+        sSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.v(TAG, "onItemSelected: \n" + i + ":" + l);
+                ItemSelected = i;
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                Log.v(TAG, "onNothingSelected: \n");
+            }
+        });
+
+
+
 
     }
 }

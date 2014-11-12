@@ -5,10 +5,16 @@ import android.app.PendingIntent;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.MessageApi;
@@ -24,59 +30,58 @@ import java.util.List;
 /**
  * Created by asprayx on 11/11/2014.
  */
-public class DataManager implements DataApi.DataListener,
-        MessageApi.MessageListener, NodeApi.NodeListener
-        {
+public class DataManager implements
+        DataApi.DataListener,
+        MessageApi.MessageListener,
+        NodeApi.NodeListener,
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener
+{
     public GoogleApiClient mGoogleApiClient;
 
-    MyActivity ParentActivity;
-    Bundle DataBul;
+    private MyActivity ParentActivity;
+    public Bundle DataBul;
 
-    public DataManager(MyActivity Parent) {
+    private static final int NOTIFICATION_ID = 1;
+    private static final int NOTIFICATION_REQUEST_CODE = 1;
+
+
+
+    TextView TestMode;
+    ImageButton powerMode;
+    ImageButton Record;
+    ImageButton SlectMode;
+    LinearLayout ButtonLayout;
+
+
+    public DataManager(MyActivity Parent, Bundle ata ) {
         ParentActivity = Parent;
-        DataBul = new Bundle();
-
+        DataBul = ata;
         mGoogleApiClient = new GoogleApiClient.Builder(ParentActivity)
                 .addApi(Wearable.API)
-                .addConnectionCallbacks(new ConnectionCallbacks(this))
-                .addOnConnectionFailedListener(new ConnectionFailedListener(this))
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
                 .build();
+        buildGui();
+
     }
 
 
 
-    private class ConnectionCallbacks implements
-            GoogleApiClient.ConnectionCallbacks {
-        DataManager Mydata;
-        private ConnectionCallbacks(DataManager data) {
-            Mydata=data;
-        }
 
-        @Override
-        public void onConnected(Bundle connectionHint) {
-            Log.d(ParentActivity.TAG, "Google API Client was connected");
-            Wearable.MessageApi.addListener(mGoogleApiClient, Mydata);
-            Wearable.NodeApi.addListener(mGoogleApiClient, Mydata);
-        }
 
-        @Override
-        public void onConnectionSuspended(int i) {
-            // empty
-        }
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.d(ParentActivity.TAG, "onConnectionSuspended: " + i);
     }
 
 
-    private class ConnectionFailedListener implements
-            GoogleApiClient.OnConnectionFailedListener {
-        DataManager Mydata;
-        private ConnectionFailedListener(DataManager data) {
-            Mydata=data;
-        }
-        @Override
-        public void onConnectionFailed(ConnectionResult result) {
-                        // empty
-        }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+        Log.d(ParentActivity.TAG, "ConnectionResult: " + result);
     }
+
 
 
     @Override //DataListener
@@ -95,11 +100,18 @@ public class DataManager implements DataApi.DataListener,
         Log.d(ParentActivity.TAG, "onPeerDisconnected: " + peer);
     }
 
-    public void updateScreen(final Bundle data){
+    @Override
+    public void onConnected(Bundle connectionHint) {
+        Log.d(ParentActivity.TAG, "Google API Client was connected");
+        Wearable.MessageApi.addListener(mGoogleApiClient, this);
+        Wearable.NodeApi.addListener(mGoogleApiClient, this);
+    }
+
+    public void updateScreen(){
         ParentActivity.runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ParentActivity.UpdateGui(data);
+                UpdateGui();
             }
         });
     }
@@ -114,10 +126,6 @@ public class DataManager implements DataApi.DataListener,
         }
         return null;
     }
-
-
-     private static final int NOTIFICATION_ID = 1;
-    private static final int NOTIFICATION_REQUEST_CODE = 1;
 
     public void showNotification() {
 
@@ -147,9 +155,104 @@ public class DataManager implements DataApi.DataListener,
 
         Log.d(ParentActivity.TAG, "onMessageReceived() A message from watch was received:" + messageEvent
                 .getRequestId() + " " + messageEvent.getPath());
+
         DataBul.putString(messageEvent.getPath(), new String(messageEvent.getData(), Charset.forName("UTF-8")));
-        updateScreen(DataBul);
+        updateScreen();
     }
 
+
+    public class SendData extends Thread {
+        int button;
+        public SendData(int button) {
+            this.button = button;
+        }
+
+        @Override
+        public void run() {
+            Log.v(ParentActivity.TAG, "doing work in Thread");
+            sendMessage(getRemoteNodeId(),this.button);
+        }
+    }
+    private void sendMessage(String node,int button) {
+
+
+        Wearable.MessageApi.sendMessage(
+                mGoogleApiClient, node, "/remote/"+button, new byte[0]).setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                        if (!sendMessageResult.getStatus().isSuccess()) {
+                            Log.e(ParentActivity.TAG, "Failed to send message with status code: "
+                                    + sendMessageResult.getStatus().getStatusCode());
+                        } else {
+                            Log.i(ParentActivity.TAG, "Sent Good");
+                        }
+                    }
+                }
+        );
+        Log.i(ParentActivity.TAG,"sent");
+
+    }
+
+    void buildGui(){
+        final WatchViewStub stub = (WatchViewStub) ParentActivity.findViewById(R.id.watch_view_stub);
+
+        stub.setOnLayoutInflatedListener(new WatchViewStub.OnLayoutInflatedListener() {
+
+
+            @Override
+            public void onLayoutInflated(WatchViewStub stub) {
+                TestMode = (TextView) stub.findViewById(R.id.TestMode);
+                ButtonLayout = (LinearLayout) stub.findViewById(R.id.ButtonLayout);
+
+                powerMode = (ImageButton) stub.findViewById(R.id.PowerMode);
+                powerMode.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        SendData randomWork = new SendData(1);
+                        randomWork.start();
+
+                    }
+                });
+
+                Record = (ImageButton) stub.findViewById(R.id.Record);
+                Record.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        SendData randomWork = new SendData(3);
+                        randomWork.start();
+                    }
+                });
+
+                SlectMode = (ImageButton) stub.findViewById(R.id.SlectMode);
+                SlectMode.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        SendData randomWork = new SendData(2);
+                        randomWork.start();
+                    }
+                });
+
+                updateScreen();
+            }
+        });
+
+
+    }
+    void UpdateGui(){
+        if (DataBul.containsKey("TestMode")){
+            TestMode.setText(DataBul.getString("TestMode"));
+        }
+        if(DataBul.containsKey("Buttons")){
+            if (DataBul.getBoolean("Buttons")){
+                ButtonLayout.setVisibility(View.VISIBLE);
+            }else{
+                ButtonLayout.setVisibility(View.GONE);
+            }
+        }
+    }
 
 }
