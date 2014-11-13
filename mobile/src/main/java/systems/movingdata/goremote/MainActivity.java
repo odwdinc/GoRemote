@@ -9,6 +9,7 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -58,7 +59,14 @@ public class MainActivity extends Activity {
     int netIdBackUp;
     int ItemSelected;
     Button ConectSend;
-    SGoPo Gotask;
+    JSONObject gpControl;
+    JSONObject gpStatus;
+    int RecordSend;
+
+    int[] xmode = new int[] {0,10,11,1,12,13,2,3,14};
+    int xmodepos = 0;
+
+    Handler handler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -82,6 +90,8 @@ public class MainActivity extends Activity {
                 .build();
         customHandler = new android.os.Handler();
         getCurrentSsid();
+
+        handler = new Handler();
 
     }
 
@@ -110,9 +120,6 @@ public class MainActivity extends Activity {
             mGoogleApiClient.disconnect();
         }
         connectWifi(netIdBackUp);
-        if(Gotask != null) {
-            Gotask.cancel(true);
-        }
         super.onStop();
     }
 
@@ -168,10 +175,10 @@ public class MainActivity extends Activity {
         return results;
     }
 
-    private class StartWearableActivityTask extends AsyncTask<Void, Void, Void> {
+    private class StartMessageActivityTask extends AsyncTask<Void, Void, Void> {
         String ACTIVITY_PATH;
         byte[] ACTIVITY_DATA;
-        private StartWearableActivityTask( String PATH, String Data) {
+        private StartMessageActivityTask( String PATH, String Data) {
             this.ACTIVITY_PATH = PATH;
             if(Data.length() > 0) {
                 this.ACTIVITY_DATA = Data.getBytes(Charset.forName("UTF-8"));
@@ -196,7 +203,7 @@ public class MainActivity extends Activity {
 
         // Trigger an AsyncTask that will query for a list of connected nodes and send a
         // "start-activity" message to each connected node.
-        new StartWearableActivityTask(START_ACTIVITY_PATH,"").execute();
+        new StartMessageActivityTask(START_ACTIVITY_PATH,"").execute();
     }
 
 
@@ -237,6 +244,8 @@ public class MainActivity extends Activity {
         );
     }
 
+
+
     private class Listeners implements DataApi.DataListener,
             MessageApi.MessageListener, NodeApi.NodeListener{
 
@@ -263,12 +272,24 @@ public class MainActivity extends Activity {
         public void onMessageReceived(final MessageEvent messageEvent) {
             if (messageEvent.getPath().equals("/remote/1")) {
                 Log.d(TAG,"PowerMode");
+                new SendCommand("http://10.5.5.9/gp/gpControl/command/system/sleep").execute();
+
             }
             else if(messageEvent.getPath().equals("/remote/2")) {
-                Log.d(TAG,"SlectMode");
+
+                xmodepos ++;
+                if (xmodepos >= xmode.length){
+                    xmodepos = 0;
+                }
+                Log.d(TAG,"SlectMode:"+xmode[xmodepos]);
+                new SendCommand("http://10.5.5.9/gp/gpControl/command/xmode?p="+xmode[xmodepos]).execute();
+
             }
             else if(messageEvent.getPath().equals("/remote/3")) {
-                Log.d(TAG,"Record");
+                Log.d(TAG,"Record:"+RecordSend);
+                new SendCommand("http://10.5.5.9/gp/gpControl/command/shutter?p="+RecordSend).execute();
+
+
             }
             else{
                 Log.d(TAG, "onMessageReceived() A message from watch was received:" + messageEvent
@@ -315,12 +336,41 @@ public class MainActivity extends Activity {
         @Override
         protected Void doInBackground(Void... args) {
            if(checkForGoPro()) {
+               //ToDo
                ProseesStatus();
+               handler.postDelayed(SoGo, 1000);
+
            }
             return null;
         }
     }
 
+
+    Runnable SoGo = new Runnable() {
+        @Override
+        public void run() {
+            new SGoPo().execute();
+        }
+    };
+
+    private class SendCommand extends AsyncTask<Void, Void, Void> {
+        String url;
+        private SendCommand(String url) {
+            this.url = url;
+        }
+
+        @Override
+        protected Void doInBackground(Void... args) {
+            Log.d(TAG,"Retreaving:"+url);
+            JSONObject jObject = getJson(url);
+            if (jObject != null) {
+                Log.d(TAG,"recived:"+jObject.toString());
+            }else{
+                Log.d(TAG,"Error:");
+            }
+            return null;
+        }
+    }
 
     void updateMessage(final String message){
         runOnUiThread(new Runnable() {
@@ -331,34 +381,47 @@ public class MainActivity extends Activity {
         });
     }
     boolean checkForGoPro(){
+        if (gpControl != null) {
+            return  true;
+        }
         updateMessage("Looking for Gopro...");
 
-        JSONObject jObject = getJson("http://10.5.5.9/gp/gpControl/status");
-        if (jObject != null) {
-                Log.v(TAG, "gpControl/status: \n" + jObject.toString());
+        gpControl = getJson("http://10.5.5.9/gp/gpControl");
+        if (gpControl != null) {
+                Log.v(TAG, "gpControl: \n" + gpControl.toString());
+            new StartMessageActivityTask("/gpControl",gpControl.toString()).execute();
             updateMessage("Found Gopro...");
 
         }else{
             updateMessage("Not Found, Plese check Network...");
         }
-        return  (jObject != null);
+        gpStatus = getJson("http://10.5.5.9/gp/gpControl");
+        if (gpStatus != null) {
+            Log.v(TAG, "Status: \n" + gpStatus.toString());
+            new StartMessageActivityTask("/status",gpStatus.toString()).execute();
+        }
+        return  (gpControl != null);
 
     }
     android.os.Handler customHandler;
 
     void ProseesStatus(){
         updateMessage("Syncing Status...");
-        while (true) {
-            JSONObject jObject = getJson("http://10.5.5.9/gp/gpControl/status");
-            if (jObject != null) {
-                Log.v(TAG, "Status: \n" + jObject.toString());
-            }
             try {
-                Thread.sleep(500);
-            }catch (InterruptedException e) {
+                gpStatus = getJson("http://10.5.5.9/gp/gpControl/status");
+                if (gpStatus != null) {
+                    Log.v(TAG, "Status: \n" + gpStatus.toString());
+                    new StartMessageActivityTask("/status",gpStatus.toString()).execute();
+                    JSONObject jsonChildNode = gpStatus.getJSONObject("status");
+                    if (jsonChildNode.getInt("8") == 1){
+                        RecordSend = 0;
+                    }else{
+                        RecordSend = 1;
+                    }
+                }
+            }catch (Exception e) {
                 e.printStackTrace();
             }
-        }
 
     }
 
@@ -384,14 +447,10 @@ public class MainActivity extends Activity {
 
     void Finished(boolean CorectNetwork){
         ConectSend.setEnabled(true);
-        if(Gotask != null) {
-            Gotask.cancel(true);
-        }
         if (CorectNetwork){
             ConectSend.setText("Connected");
             onStartWearableActivity();
-            Gotask = new SGoPo();
-            Gotask.execute();
+            handler.postDelayed(SoGo, 1000);
 
         }else{
             ConectSend.setText("Error try another");

@@ -7,147 +7,142 @@
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:gravity="center_vertical|center_horizontal">
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_alignParentTop="true">
 
-        <GridLayout
-            android:layout_width="wrap_content"
+        <ImageButton
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:alignmentMode="alignBounds"
-            android:layout_gravity="center"
-            android:id="@+id/gridLayout"
-            android:background="#ff5d7367"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"
-            android:layout_alignParentRight="true"
-            android:layout_margin="30dp">
-
-            <LinearLayout
-                android:orientation="horizontal"
-                android:layout_width="fill_parent"
-                android:layout_height="25dp"
-                android:layout_row="0"
-                android:layout_column="0"
-                android:layout_rowSpan="1"
-                android:background="#ff000000"
-                android:layout_margin="5dp"
-                android:layout_columnSpan="2">
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:id="@+id/ImageMode"
-                    android:layout_row="2"
-                    android:layout_column="1"
-                    android:src="@drawable/video" />
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:id="@+id/ImgeMode2"
-                    android:layout_row="2"
-                    android:layout_column="2"
-                    android:src="@drawable/wide"
-                    android:layout_marginRight="30dp" />
-
-            </LinearLayout>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="@android:style/TextAppearance.Small"
-                android:text="4K-30"
-                android:id="@+id/TestMode"
-                android:layout_row="1"
-                android:layout_column="0"
-                android:layout_rowSpan="1"
-                android:layout_columnSpan="2" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:text="00:00"
-                android:id="@+id/RunTime"
-                android:layout_row="2"
-                android:layout_column="0"
-                android:layout_columnSpan="2"
-                android:layout_gravity="center"
-                android:layout_rowSpan="1"
-                android:textSize="35dp" />
-
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/imageView"
-                android:layout_row="4"
-                android:layout_column="1"
-                android:src="@android:drawable/presence_online"
-                android:layout_marginLeft="10dp" />
-
-            <ImageView
-                android:layout_width="fill_parent"
-                android:layout_height="2dp"
-                android:id="@+id/imageView2"
-                android:layout_row="3"
-                android:layout_column="0"
-                android:background="#ff000000"
-                android:src="#ff000000"
-                android:layout_columnSpan="2" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:text="1H:04"
-                android:id="@+id/RecordingTime"
-                android:layout_row="4"
-                android:layout_column="0"
-                android:layout_rowSpan="1"
-                android:layout_columnSpan="1" />
-
-        </GridLayout>
+            android:id="@+id/PowerMode"
+            android:src="@android:drawable/ic_lock_power_off"
+            android:layout_marginTop="-8dp" />
 
         <LinearLayout
+            android:orientation="horizontal"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/ButtonLayout"
-            android:layout_below="@+id/gridLayout"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="-25dp"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:visibility="visible">
+            android:layout_height="wrap_content">
 
             <ImageButton
                 style="?android:attr/buttonStyleSmall"
-                android:layout_width="0dp"
-                android:layout_height="fill_parent"
-                android:id="@+id/PowerMode"
-                android:layout_weight="1"
-                android:src="@android:drawable/ic_lock_power_off" />
-
-            <ImageButton
                 android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:id="@+id/Record"
-                android:layout_below="@+id/linearLayout"
+                android:layout_height="match_parent"
+                android:text="New Button"
+                android:id="@+id/imageButton"
+                android:layout_weight="7.80"
+                android:adjustViewBounds="false"
+                android:clickable="true" />
+
+            <GridLayout
+                android:layout_width="128dp"
+                android:layout_height="wrap_content"
+                android:alignmentMode="alignBounds"
+                android:layout_gravity="center"
+                android:id="@+id/gridLayout"
+                android:background="#ff5d7367"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
                 android:layout_alignParentBottom="true"
-                android:src="@android:drawable/ic_notification_overlay"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentStart="true" />
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentRight="true">
+
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="fill_parent"
+                    android:layout_height="25dp"
+                    android:layout_row="0"
+                    android:layout_column="0"
+                    android:layout_rowSpan="1"
+                    android:background="#ff000000"
+                    android:layout_margin="5dp"
+                    android:layout_columnSpan="2">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/ImageMode"
+                        android:layout_row="2"
+                        android:layout_column="1"
+                        android:src="@drawable/video" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:id="@+id/ImgeMode2"
+                        android:layout_row="2"
+                        android:layout_column="2"
+                        android:src="@drawable/wide"
+                        android:layout_marginRight="30dp"
+                        android:visibility="invisible" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="@android:style/TextAppearance.Small"
+                    android:text="4K-30"
+                    android:id="@+id/TestMode"
+                    android:layout_row="1"
+                    android:layout_column="0"
+                    android:layout_rowSpan="1"
+                    android:layout_columnSpan="2" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:text="00:00"
+                    android:id="@+id/RunTime"
+                    android:layout_row="2"
+                    android:layout_column="0"
+                    android:layout_columnSpan="2"
+                    android:layout_gravity="center"
+                    android:layout_rowSpan="1"
+                    android:textSize="35dp" />
+
+                <ImageView
+                    android:layout_width="fill_parent"
+                    android:layout_height="2dp"
+                    android:id="@+id/imageView2"
+                    android:layout_row="3"
+                    android:layout_column="0"
+                    android:background="#ff000000"
+                    android:src="#ff000000"
+                    android:layout_columnSpan="2" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:text="1H:04"
+                    android:id="@+id/RecordingTime"
+                    android:layout_row="4"
+                    android:layout_column="0"
+                    android:layout_rowSpan="1"
+                    android:layout_columnSpan="1" />
+
+            </GridLayout>
 
             <ImageButton
                 style="?android:attr/buttonStyleSmall"
-                android:layout_width="0dp"
-                android:layout_height="fill_parent"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
                 android:text="New Button"
                 android:id="@+id/SlectMode"
-                android:layout_weight="1"
+                android:layout_weight="7.80"
                 android:src="@android:drawable/ic_menu_preferences" />
-
         </LinearLayout>
+
+        <ImageButton
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/Record"
+            android:layout_below="@+id/linearLayout"
+            android:layout_alignParentBottom="true"
+            android:src="@android:drawable/ic_notification_overlay"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentStart="true" />
 
     </LinearLayout>
 

@@ -9,7 +9,7 @@ import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -22,6 +22,8 @@ import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
+
+import org.json.JSONObject;
 
 import java.nio.charset.Charset;
 import java.util.HashSet;
@@ -51,8 +53,7 @@ public class DataManager implements
     ImageButton powerMode;
     ImageButton Record;
     ImageButton SlectMode;
-    LinearLayout ButtonLayout;
-
+    ImageView ImageMode;
 
     public DataManager(MyActivity Parent, Bundle ata ) {
         ParentActivity = Parent;
@@ -156,8 +157,44 @@ public class DataManager implements
         Log.d(ParentActivity.TAG, "onMessageReceived() A message from watch was received:" + messageEvent
                 .getRequestId() + " " + messageEvent.getPath());
 
-        DataBul.putString(messageEvent.getPath(), new String(messageEvent.getData(), Charset.forName("UTF-8")));
+        if (messageEvent.getPath().equals("/status")) {
+            prossessStatus(new String(messageEvent.getData(), Charset.forName("UTF-8")));
+        }
+
+
+
         updateScreen();
+    }
+
+
+
+
+    void prossessStatus(String statusString){
+        try {
+
+            JSONObject gpStatus = new JSONObject(statusString);
+
+            JSONObject jsonChildNode = gpStatus.getJSONObject("status");
+
+            DataBul.putInt("mode", jsonChildNode.getInt("43"));
+            DataBul.putInt("sub_mode", jsonChildNode.getInt("44"));
+
+            DataBul.putInt("internal_battery_present", jsonChildNode.getInt("1"));
+            DataBul.putInt("internal_battery_level", jsonChildNode.getInt("2"));
+            DataBul.putInt("system_hot", jsonChildNode.getInt("6"));
+
+
+
+            DataBul.putInt("video_progress_counter", jsonChildNode.getInt("13"));
+
+            DataBul.putInt("multi_shot_count_down", jsonChildNode.getInt("49"));
+
+            DataBul.putInt("remaining_photos", jsonChildNode.getInt("34"));
+            DataBul.putInt("remaining_video_time", jsonChildNode.getInt("35"));
+
+        }catch (Exception e) {
+            Log.v(ParentActivity.TAG, "Oops: \n" );
+        }
     }
 
 
@@ -203,7 +240,7 @@ public class DataManager implements
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
                 TestMode = (TextView) stub.findViewById(R.id.TestMode);
-                ButtonLayout = (LinearLayout) stub.findViewById(R.id.ButtonLayout);
+
 
                 powerMode = (ImageButton) stub.findViewById(R.id.PowerMode);
                 powerMode.setOnClickListener(new View.OnClickListener() {
@@ -235,7 +272,7 @@ public class DataManager implements
                         randomWork.start();
                     }
                 });
-
+                ImageMode = (ImageView)stub.findViewById(R.id.ImageMode);
                 updateScreen();
             }
         });
@@ -248,9 +285,39 @@ public class DataManager implements
         }
         if(DataBul.containsKey("Buttons")){
             if (DataBul.getBoolean("Buttons")){
-                ButtonLayout.setVisibility(View.VISIBLE);
+                //ButtonLayout.setVisibility(View.VISIBLE);
             }else{
-                ButtonLayout.setVisibility(View.GONE);
+                //ButtonLayout.setVisibility(View.GONE);
+            }
+        }
+
+        if(DataBul.containsKey("mode")){
+           int mode =  DataBul.getInt("mode");
+           int sub_mode = DataBul.getInt("sub_mode");
+            if (mode == 0){
+                if (sub_mode == 0) {
+                    ImageMode.setImageResource(R.drawable.video);
+                }else if( sub_mode == 2){
+                    ImageMode.setImageResource(R.drawable.video_photo);
+                }else if(sub_mode == 3){
+                    ImageMode.setImageResource(R.drawable.looping);
+                }
+            }else if(mode == 1){
+                if (sub_mode == 0) {
+                    ImageMode.setImageResource(R.drawable.single);
+                }else if( sub_mode == 1){
+                    ImageMode.setImageResource(R.drawable.continuous);
+                }else if(sub_mode == 2){
+                    ImageMode.setImageResource(R.drawable.night);
+                }
+            }else if(mode == 2){
+                if (sub_mode == 0) {
+                    ImageMode.setImageResource(R.drawable.burst);
+                }else if( sub_mode == 1){
+                    ImageMode.setImageResource(R.drawable.time_lapse);
+                }else if(sub_mode == 2){
+                    ImageMode.setImageResource(R.drawable.night_lapse);
+                }
             }
         }
     }
