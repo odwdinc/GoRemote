@@ -298,7 +298,8 @@ public class DataManager implements
                 if (sub_mode == 0) {
                     ImageMode.setImageResource(R.drawable.video);
                 }else if( sub_mode == 2){
-                    ImageMode.setImageResource(R.drawable.video_photo);
+                    //ToDo fix to video_photo
+                    ImageMode.setImageResource(R.drawable.video);
                 }else if(sub_mode == 3){
                     ImageMode.setImageResource(R.drawable.looping);
                 }
@@ -319,7 +320,11 @@ public class DataManager implements
                     ImageMode.setImageResource(R.drawable.night_lapse);
                 }
             }
+
+
         }
+
+
     }
 
 }

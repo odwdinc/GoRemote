@@ -55,7 +55,6 @@ public class MainActivity extends Activity {
     Spinner sSpinner;
     private static final String START_ACTIVITY_PATH = "/start-activity";
     private static final String DATA_ACTIVITY_PATH = "/data";
-    List<String> Wifilist;
     int netIdBackUp;
     int ItemSelected;
     Button ConectSend;
@@ -213,11 +212,11 @@ public class MainActivity extends Activity {
 
         if (connectionInfo != null && !(connectionInfo.getSSID().equals(""))) {
             //if (connectionInfo != null && !StringUtil.isBlank(connectionInfo.getSSID())) {
-            if (Wifilist.indexOf(connectionInfo.getSSID()) ==  netId){
+            if (connectionInfo.getNetworkId() ==  netId){
 
                 return;
             }else{
-                netIdBackUp = Wifilist.indexOf(connectionInfo.getSSID());
+                netIdBackUp = connectionInfo.getNetworkId();
             }
         }
         wifiManager.disconnect();
@@ -325,7 +324,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Finished(ExpectedID == Wifilist.indexOf(connectionInfo.getSSID()));
+                        Finished(ExpectedID == connectionInfo.getNetworkId());
                     }
                 });
             Log.d(TAG, "isConnected:" + connectionInfo.getSSID());
@@ -465,9 +464,11 @@ public class MainActivity extends Activity {
 
         // List stored networks
         List<WifiConfiguration> configs = wifiManager.getConfiguredNetworks();
-        Wifilist = new ArrayList<String>();
+        ArrayList<String> Wifilist = new ArrayList<String>();
         for (WifiConfiguration config : configs) {
-            Wifilist.add(config.networkId,config.SSID);
+
+            Log.v(TAG, "networkId:" + config.networkId);
+            Wifilist.add(config.SSID);
         }
         ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>
                 (this, android.R.layout.simple_list_item_activated_1,Wifilist);
