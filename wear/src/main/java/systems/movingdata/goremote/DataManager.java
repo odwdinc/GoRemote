@@ -2,14 +2,19 @@ package systems.movingdata.goremote;
 
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.wearable.view.WatchViewStub;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.GridLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -40,6 +45,7 @@ public class DataManager implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener
 {
+    private final Vibrator mVibrator;
     public GoogleApiClient mGoogleApiClient;
 
     private MyActivity ParentActivity;
@@ -50,10 +56,17 @@ public class DataManager implements
 
 
 
-    TextView TestMode, RunTime, RecordingTime;
-    ImageButton powerMode, Record, SlectMode;
+    private TextView TestMode, RunTime, RecordingTime;
+    private ImageButton powerMode, Record, SlectMode;
 
-    ImageView ImageMode;
+    private ImageView ImageMode;
+    private LinearLayout ButtonLayout;
+    private TextView StatusOverlay;
+    private GridLayout SecrenLayout;
+    private FrameLayout FramOverlay;
+    private ImageView p1;
+    private ImageView p2;
+    private ImageView p3;
 
     public DataManager(MyActivity Parent, Bundle ata ) {
         ParentActivity = Parent;
@@ -65,6 +78,8 @@ public class DataManager implements
                 .build();
         buildGui();
 
+
+        mVibrator = (Vibrator) ParentActivity.getSystemService(Context.VIBRATOR_SERVICE);
     }
 
 
@@ -190,9 +205,9 @@ public class DataManager implements
                                 case 7:
                                     return "1440";
                                 case 8:
-                                    return "1080";
-                                case 9:
                                     return "1080 S";
+                                case 9:
+                                    return "1080";
                                 case 10:
                                     return "960";
                                 case 11:
@@ -232,6 +247,133 @@ public class DataManager implements
                                     return "12.5";
                             }
                     }
+                    break;
+                case 1:
+                    switch (setting) {
+                        case 17:
+                            switch (option) {
+                                case 0:
+                                    return "2MP Wide";
+                                case 1:
+                                    return "7MP Wide";
+                                case 2:
+                                    return "7MP Med";
+                                case 3:
+                                    return "5MP Med";
+
+                            }
+
+                        case 18:
+                            switch (option) {
+                                case 0:
+                                    return "3fps";
+                                case 1:
+                                    return "5fps";
+                                case 2:
+                                    return "10fps";
+
+                            }
+                        case 19:
+                            switch (option) {
+                                case 0:
+                                    return "Auto";
+                                case 1:
+                                    return "2 Sec";
+                                case 2:
+                                    return "5 Sec";
+                                case 3:
+                                    return "10 Sec";
+                                case 4:
+                                    return "15 Sec";
+                                case 5:
+                                    return "20 Sec";
+                                case 6:
+                                    return "30 Sec";
+                            }
+
+
+                    }
+                case 2:
+                    switch (setting) {
+                        case 28:
+                            switch (option) {
+                                case 0:
+                                    return "2MP Wide";
+                                case 1:
+                                    return "7MP Wide";
+                                case 2:
+                                    return "7MP Med";
+                                case 3:
+                                    return "5MP Med";
+
+                            }
+                        case 29:
+                            switch (option) {
+                                case 0:
+                                    return "3/1s";
+                                case 1:
+                                    return "5/1s";
+                                case 2:
+                                    return "10/1s";
+                                case 3:
+                                    return "10/2s";
+                                case 4:
+                                    return "10/3s";
+                                case 5:
+                                    return "30/1s";
+                                case 6:
+                                    return "30/2s";
+                                case 7:
+                                    return "30/3s";
+
+
+                            }
+                        case 30:
+                            switch (option) {
+                                case 0:
+                                    return "0.5 Sec";
+                                case 1:
+                                    return "1 Sec";
+                                case 2:
+                                    return "2 Sec";
+                                case 5:
+                                    return "5 Sec";
+                                case 10:
+                                    return "10 Sec";
+                                case 30:
+                                    return "30 Sec";
+                                case 60:
+                                    return "60 Sec";
+                            }
+                        case 32:
+                            switch (option) {
+                                case 0:
+                                    return "Continuous";
+                                case 4:
+                                    return "4 Sec";
+                                case 5:
+                                    return "5 Sec";
+                                case 10:
+                                    return "10 Sec";
+                                case 15:
+                                    return "15 Sec";
+                                case 20:
+                                    return "20 Sec";
+                                case 30:
+                                    return "30 Sec";
+                                case 60:
+                                    return "1 Min";
+                                case 120:
+                                    return "2 Min";
+                                case 300:
+                                    return "5 Min";
+                                case 1800:
+                                    return "30 Min";
+                            }
+
+                    }
+
+
             }
         }catch (Exception e) {
                 Log.v(ParentActivity.TAG, "Oops: GetSettingMode\n"+e );
@@ -317,8 +459,19 @@ public class DataManager implements
 
 
             jsonChildNode = gpStatus.getJSONObject("settings");
-            DataBul.putString("resolution", GetSettingMode(0,2,jsonChildNode));
+            DataBul.putString("Vresolution", GetSettingMode(0,2,jsonChildNode));
             DataBul.putString("fps", GetSettingMode(0,3,jsonChildNode));
+            DataBul.putString("Presolution", GetSettingMode(1,17,jsonChildNode));
+            DataBul.putString("continuous_rate", GetSettingMode(1,18,jsonChildNode));
+            DataBul.putString("exposure_time", GetSettingMode(1,19,jsonChildNode));
+
+            DataBul.putString("Cresolution",GetSettingMode(2,28,jsonChildNode));
+            DataBul.putString("burst_rate",GetSettingMode(2,29,jsonChildNode));
+            DataBul.putString("nightlapse_rate",GetSettingMode(2,32,jsonChildNode));
+            DataBul.putString("timelapse_rate",GetSettingMode(2,30,jsonChildNode));
+
+
+
             /*
             DataBul.putString("fov", GetSettingMode(0,4,jsonChildNode));
             DataBul.putString("timelapse_rate", GetSettingMode(0,5,jsonChildNode));
@@ -377,6 +530,7 @@ public class DataManager implements
 
     }
 
+
     void buildGui(){
         final WatchViewStub stub = (WatchViewStub) ParentActivity.findViewById(R.id.watch_view_stub);
 
@@ -385,17 +539,33 @@ public class DataManager implements
 
             @Override
             public void onLayoutInflated(WatchViewStub stub) {
+                ButtonLayout = (LinearLayout) stub.findViewById(R.id.ButtonLayout);
                 TestMode = (TextView) stub.findViewById(R.id.TestMode);
                 RunTime = (TextView) stub.findViewById(R.id.RunTime);
                 RecordingTime = (TextView) stub.findViewById(R.id.RecordingTime);
+
+                StatusOverlay = (TextView)stub.findViewById(R.id.StatusOverlay);
+
+                SecrenLayout = (GridLayout) stub.findViewById(R.id.SecrenLayout);
+
+                FramOverlay = (FrameLayout) stub.findViewById(R.id.FramOverlay);
+
+                //pL = (ImageView)stub.findViewById(R.id.pL);
+                //pR = (ImageView)stub.findViewById(R.id.pR);
+                
+                p1 = (ImageView)stub.findViewById(R.id.p1);
+                p2 = (ImageView)stub.findViewById(R.id.p2);
+                p3 = (ImageView)stub.findViewById(R.id.p3);
+
+
 
                 powerMode = (ImageButton) stub.findViewById(R.id.PowerMode);
                 powerMode.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
 
-                        SendData randomWork = new SendData(1);
-                        randomWork.start();
+                        sendButton(1);
+
 
                     }
                 });
@@ -405,8 +575,7 @@ public class DataManager implements
                     @Override
                     public void onClick(View view) {
 
-                        SendData randomWork = new SendData(3);
-                        randomWork.start();
+                        sendButton(3);
                     }
                 });
 
@@ -415,8 +584,7 @@ public class DataManager implements
                     @Override
                     public void onClick(View view) {
 
-                        SendData randomWork = new SendData(2);
-                        randomWork.start();
+                        sendButton(2);
                     }
                 });
                 ImageMode = (ImageView)stub.findViewById(R.id.ImageMode);
@@ -426,16 +594,67 @@ public class DataManager implements
 
 
     }
+
+    void sendButton(int k){
+        if ( StatusOverlay.getVisibility() != View.VISIBLE ){
+            mVibrator.vibrate(75);
+            SendData randomWork = new SendData(k);
+            randomWork.start();
+        }
+    }
+
+
     void UpdateGui(){
+
         if(DataBul.containsKey("Buttons")){
+
             if (DataBul.getBoolean("Buttons")){
-                //ButtonLayout.setVisibility(View.VISIBLE);
+                ButtonLayout.setVisibility(View.VISIBLE);
+
             }else{
-                //ButtonLayout.setVisibility(View.GONE);
+                ButtonLayout.setVisibility(View.GONE);
+
             }
         }
 
+        switch (DataBul.getInt("internal_battery_level")) {
+            case 4:
+                if (p3.getVisibility() == View.VISIBLE) {
+                    p3.setVisibility(View.INVISIBLE);
+                    p2.setVisibility(View.INVISIBLE);
+                    p1.setVisibility(View.INVISIBLE);
+
+                } else {
+                    p3.setVisibility(View.VISIBLE);
+                    p2.setVisibility(View.VISIBLE);
+                    p1.setVisibility(View.VISIBLE);
+                }
+                break;
+            case 3:
+                p3.setVisibility(View.VISIBLE);
+                p2.setVisibility(View.VISIBLE);
+                p1.setVisibility(View.VISIBLE);
+                break;
+            case 2:
+                p3.setVisibility(View.INVISIBLE);
+                p2.setVisibility(View.VISIBLE);
+                p1.setVisibility(View.VISIBLE);
+                break;
+            case 1:
+                p3.setVisibility(View.INVISIBLE);
+                p2.setVisibility(View.INVISIBLE);
+                p1.setVisibility(View.VISIBLE);
+                break;
+            case 0:
+                p3.setVisibility(View.INVISIBLE);
+                p2.setVisibility(View.INVISIBLE);
+                p1.setVisibility(View.INVISIBLE);
+                break;
+
+        }
+
         if(DataBul.containsKey("mode")){
+
            int mode =  DataBul.getInt("mode");
            int sub_mode = DataBul.getInt("sub_mode");
             if (mode == 0){
@@ -447,8 +666,10 @@ public class DataManager implements
                 }else if(sub_mode == 3){
                     ImageMode.setImageResource(R.drawable.looping);
                 }
-                TestMode.setText(DataBul.getString("resolution")+" - "+DataBul.getString("fps"));
-                RecordingTime.setText(""+DataBul.getInt("remaining_video_time") + "s [" + repeat('#',  DataBul.getInt("internal_battery_level"))+ "]");
+
+
+                TestMode.setText(DataBul.getString("Vresolution")+" - "+DataBul.getString("fps"));
+                RecordingTime.setText(""+DataBul.getInt("remaining_video_time") + "s   ");
                 if (DataBul.getInt("system_busy") == 1){
                     int time = DataBul.getInt("video_progress_counter");
                     if (time >= 60){
@@ -467,24 +688,45 @@ public class DataManager implements
                 //Photo
                 if (sub_mode == 0) {
                     ImageMode.setImageResource(R.drawable.single);
+                    TestMode.setText(DataBul.getString("Presolution"));
                 }else if( sub_mode == 1){
                     ImageMode.setImageResource(R.drawable.continuous);
+                    TestMode.setText(DataBul.getString("Presolution")+ "    " + DataBul.getString("continuous_rate"));
                 }else if(sub_mode == 2){
                     ImageMode.setImageResource(R.drawable.night);
+                    TestMode.setText(DataBul.getString("Presolution") + "    "+ DataBul.getString("exposure_time"));
                 }
+
+                RunTime.setText(""+DataBul.getInt("num_total_photos") );
+                RecordingTime.setText(""+DataBul.getInt("remaining_photos")+"   ");
+
 
 
             }else if(mode == 2){
                 //Multishot
                 if (sub_mode == 0) {
                     ImageMode.setImageResource(R.drawable.burst);
+                    TestMode.setText(DataBul.getString("Cresolution")+ "    "+ DataBul.getString("burst_rate"));
+
                 }else if( sub_mode == 1){
                     ImageMode.setImageResource(R.drawable.time_lapse);
+                    TestMode.setText(DataBul.getString("Cresolution")+ "    "+ DataBul.getString("timelapse_rate"));
                 }else if(sub_mode == 2){
                     ImageMode.setImageResource(R.drawable.night_lapse);
+                    TestMode.setText(DataBul.getString("Cresolution")+ "    "+ DataBul.getString("nightlapse_rate"));
                 }
 
+                RunTime.setText(""+DataBul.getInt("num_total_photos") );
+                RecordingTime.setText(""+DataBul.getInt("remaining_photos")+"   ");
 
+
+
+            }
+
+
+            if(StatusOverlay.getVisibility() == View.VISIBLE){
+                StatusOverlay.setVisibility(View.INVISIBLE);
+                SecrenLayout.setVisibility(View.VISIBLE);
             }
 
 

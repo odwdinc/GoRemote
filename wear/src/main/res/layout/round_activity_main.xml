@@ -7,44 +7,30 @@
         android:orientation="vertical"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:gravity="center_vertical|center_horizontal"
-        android:layout_alignParentTop="true">
+        android:gravity="center_vertical|center_horizontal">
 
-        <ImageButton
-            style="?android:attr/buttonStyleSmall"
-            android:layout_width="fill_parent"
+        <FrameLayout
+            android:layout_width="150dp"
             android:layout_height="wrap_content"
-            android:id="@+id/PowerMode"
-            android:src="@android:drawable/ic_lock_power_off"
-            android:layout_marginTop="-8dp" />
-
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content">
-
-            <ImageButton
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="New Button"
-                android:id="@+id/imageButton"
-                android:layout_weight="7.80"
-                android:adjustViewBounds="false"
-                android:clickable="true" />
+            android:id="@+id/FramOverlay"
+            android:background="#ff5d7367"
+            android:layout_marginTop="25dp"
+            android:layout_marginBottom="30dp"
+            android:layout_marginLeft="0dp"
+            android:layout_marginRight="0dp">
 
             <GridLayout
-                android:layout_width="128dp"
-                android:layout_height="wrap_content"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:alignmentMode="alignBounds"
                 android:layout_gravity="center"
-                android:id="@+id/gridLayout"
-                android:background="#ff5d7367"
+                android:id="@+id/SecrenLayout"
                 android:layout_alignParentTop="true"
                 android:layout_centerHorizontal="true"
                 android:layout_alignParentBottom="true"
                 android:layout_alignParentLeft="true"
-                android:layout_alignParentRight="true">
+                android:layout_alignParentRight="true"
+                android:visibility="invisible">
 
                 <LinearLayout
                     android:orientation="horizontal"
@@ -124,27 +110,97 @@
                     android:layout_rowSpan="1"
                     android:layout_columnSpan="1" />
 
+                <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_row="4"
+                    android:layout_column="1">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/pL"
+                        android:src="@android:drawable/arrow_up_float" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/p3"
+                        android:src="@android:drawable/arrow_up_float" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/p2"
+                        android:src="@android:drawable/arrow_up_float" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/p1"
+                        android:src="@android:drawable/arrow_up_float" />
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:id="@+id/pR"
+                        android:src="@android:drawable/arrow_up_float" />
+                </LinearLayout>
+
             </GridLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/StatusOverlay"
+                android:text="Linking..."
+                android:gravity="center"
+                android:textSize="25dp"
+                android:textIsSelectable="false"
+                android:visibility="visible" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:id="@+id/ButtonLayout"
+            android:layout_below="@+id/gridLayout"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="-32dp"
+            android:visibility="visible">
 
             <ImageButton
                 style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:id="@+id/PowerMode"
+                android:layout_weight="1"
+                android:src="@android:drawable/ic_lock_power_off"
+                android:paddingLeft="30dp" />
+
+            <ImageButton
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
+                android:id="@+id/Record"
+                android:layout_below="@+id/linearLayout"
+                android:layout_alignParentBottom="true"
+                android:src="@android:drawable/ic_notification_overlay"
+                android:layout_alignParentEnd="true"
+                android:layout_weight=".75"
+                android:layout_alignParentStart="true" />
+
+            <ImageButton
+                style="?android:attr/buttonStyleSmall"
+                android:layout_width="0dp"
+                android:layout_height="fill_parent"
                 android:text="New Button"
                 android:id="@+id/SlectMode"
-                android:layout_weight="7.80"
-                android:src="@android:drawable/ic_menu_preferences" />
-        </LinearLayout>
+                android:layout_weight="1"
+                android:src="@android:drawable/ic_menu_preferences"
+                android:paddingRight="40dp" />
 
-        <ImageButton
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent"
-            android:id="@+id/Record"
-            android:layout_below="@+id/linearLayout"
-            android:layout_alignParentBottom="true"
-            android:src="@android:drawable/ic_notification_overlay"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentStart="true" />
+        </LinearLayout>
 
     </LinearLayout>
 

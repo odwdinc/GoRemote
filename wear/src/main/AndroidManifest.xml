@@ -3,6 +3,8 @@
     package="systems.movingdata.goremote" >
 
     <uses-feature android:name="android.hardware.type.watch" />
+    <uses-permission
+        android:name="android.permission.VIBRATE"></uses-permission>
 
     <application
         android:allowBackup="true"
@@ -36,11 +38,6 @@
             android:launchMode="singleTask"
             android:exported="true"
             android:taskAffinity="" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
     </application>
 

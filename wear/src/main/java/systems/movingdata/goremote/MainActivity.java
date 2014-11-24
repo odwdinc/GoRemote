@@ -1,6 +1,7 @@
 package systems.movingdata.goremote;
 
 import android.os.Bundle;
+import android.view.WindowManager;
 
 public class MainActivity extends MyActivity{
 
@@ -12,6 +13,7 @@ public class MainActivity extends MyActivity{
         }
         savedInstanceState.putBoolean("Buttons",true);
         super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     @Override
