@@ -4,7 +4,9 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.Vibrator;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.wearable.view.WatchViewStub;
@@ -44,8 +46,11 @@ public class DataManager implements
         NodeApi.NodeListener,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener
+
+
 {
     private final Vibrator mVibrator;
+    private final Handler handler;
     public GoogleApiClient mGoogleApiClient;
 
     private MyActivity ParentActivity;
@@ -68,6 +73,9 @@ public class DataManager implements
     private ImageView p2;
     private ImageView p3;
 
+    private static final String START_ACTIVITY_PATH = "/start-activity";
+
+
     public DataManager(MyActivity Parent, Bundle ata ) {
         ParentActivity = Parent;
         DataBul = ata;
@@ -80,10 +88,44 @@ public class DataManager implements
 
 
         mVibrator = (Vibrator) ParentActivity.getSystemService(Context.VIBRATOR_SERVICE);
+        handler = new Handler();
+        if(!DataBul.containsKey("Started")){
+            handler.postDelayed(SoGo, 1000);
+        }
+
     }
 
 
+    Runnable SoGo = new Runnable() {
+        @Override
+        public void run() {
+            new SGoPo().execute();
+        }
+    };
 
+    private class SGoPo extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... args) {
+            if(StatusOverlay.getVisibility() == View.VISIBLE){
+                Wearable.MessageApi.sendMessage(mGoogleApiClient,getRemoteNodeId(),START_ACTIVITY_PATH,new byte[0]).setResultCallback(
+                        new ResultCallback<MessageApi.SendMessageResult>() {
+                            @Override
+                            public void onResult(MessageApi.SendMessageResult sendMessageResult) {
+                                if (!sendMessageResult.getStatus().isSuccess()) {
+                                    Log.e(ParentActivity.TAG, "Failed to send message with status code: "
+                                            + sendMessageResult.getStatus().getStatusCode());
+                                } else {
+                                    Log.i(ParentActivity.TAG, "Sent Good");
+                                }
+                            }
+                        }
+                );
+            }else{
+                Log.i(ParentActivity.TAG, "Good Link");
+            }
+            return null;
+        }
+    }
 
 
     @Override
@@ -137,8 +179,10 @@ public class DataManager implements
         NodeApi.GetConnectedNodesResult nodesResult =
                 Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
         List<Node> nodes = nodesResult.getNodes();
-        if (nodes.size() > 0) {
-            return nodes.get(0).getId();
+        if(nodes != null) {
+            if (nodes.size() > 0) {
+                return nodes.get(0).getId();
+            }
         }
         return null;
     }
@@ -180,10 +224,35 @@ public class DataManager implements
             prossessControl(new String(messageEvent.getData(), Charset.forName("UTF-8")));
         }
 
+        if (messageEvent.getPath().equals("/disconnect")) {
+            if(StatusOverlay.getVisibility() == View.INVISIBLE) {
+
+                handler.postDelayed(disGo, 2000);
+
+
+            }
+        }
 
 
         updateScreen();
     }
+
+    Runnable disGo = new Runnable() {
+        @Override
+        public void run() {
+            ParentActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+
+                    StatusOverlay.setVisibility(View.VISIBLE);
+                    SecrenLayout.setVisibility(View.INVISIBLE);
+                }
+            });
+        }
+    };
+
+
+
     String GetSettingMode(int mode, int setting, JSONObject node){
         try {
             int option = node.getInt("" + setting);
@@ -496,6 +565,11 @@ public class DataManager implements
         }
         return tst;
     }
+
+
+
+
+
 
     public class SendData extends Thread {
         int button;

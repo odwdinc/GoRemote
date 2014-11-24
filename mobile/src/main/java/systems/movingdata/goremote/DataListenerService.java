@@ -10,7 +10,7 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
 /**
- * Created by ap on 11/8/14.
+ * Created by ap on 11/23/14.
  */
 public class DataListenerService  extends WearableListenerService {
     private static final String START_ACTIVITY_PATH = "/start-activity";
@@ -34,9 +34,8 @@ public class DataListenerService  extends WearableListenerService {
         // Check to see if the message is to start an activity
         if (messageEvent.getPath().equals(START_ACTIVITY_PATH)) {
             Intent startIntent = new Intent(this, MainActivity.class);
-            startIntent.putExtra("Started",true);
-            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                    Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startIntent.putExtra("Launch",false);
+            startIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(startIntent);
         }else{
 

@@ -13,11 +13,18 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
 
+        <service android:name="systems.movingdata.goremote.DataListenerService" >
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
+
         <meta-data
             android:name="com.google.android.gms.version"
             android:value="@integer/google_play_services_version" />
         <activity
             android:name="systems.movingdata.goremote.MainActivity"
+            android:launchMode="singleTask"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -66,6 +66,9 @@ public class MainActivity extends Activity {
     int xmodepos = 0;
 
     Handler handler;
+    private boolean launchWhar = true;
+    private boolean Connected = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,12 +76,24 @@ public class MainActivity extends Activity {
         myListeners = new Listeners();
         ConectSend = (Button)findViewById(R.id.button);
         sSpinner=(Spinner)findViewById(R.id.spinner);
+        if(savedInstanceState != null) {
+            if (savedInstanceState.containsKey("Launch")) {
+                launchWhar = savedInstanceState.getBoolean("Launch", true);
+            }
+        }
+
         ConectSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Log.d(TAG, "onClick "+ItemSelected);
-                connectWifi(ItemSelected);
-                new CheckForConectionTask(ItemSelected).execute();
+                if (!Connected) {
+                    connectWifi(ItemSelected);
+                    new CheckForConectionTask(ItemSelected).execute();
+                }else {
+                    Connected = false;
+                    updateMessage("ReConnect");
+                    new StartMessageActivityTask("/disconnect","").execute();
+                }
             }
 
             });
@@ -334,7 +349,7 @@ public class MainActivity extends Activity {
     private class SGoPo extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... args) {
-           if(checkForGoPro()) {
+           if(checkForGoPro() && Connected) {
                //ToDo
                ProseesStatus();
                handler.postDelayed(SoGo, 1000);
@@ -348,7 +363,7 @@ public class MainActivity extends Activity {
     Runnable SoGo = new Runnable() {
         @Override
         public void run() {
-            new SGoPo().execute();
+            if(Connected){new SGoPo().execute();}
         }
     };
 
@@ -405,7 +420,8 @@ public class MainActivity extends Activity {
     android.os.Handler customHandler;
 
     void ProseesStatus(){
-        updateMessage("Syncing Status...");
+        updateMessage("Syncing Status... Disconect");
+
             try {
                 gpStatus = getJson("http://10.5.5.9/gp/gpControl/status");
                 if (gpStatus != null) {
@@ -448,7 +464,10 @@ public class MainActivity extends Activity {
         ConectSend.setEnabled(true);
         if (CorectNetwork){
             ConectSend.setText("Connected");
-            onStartWearableActivity();
+            Connected = true;
+            if(launchWhar) {
+                onStartWearableActivity();
+            }
             handler.postDelayed(SoGo, 1000);
 
         }else{
