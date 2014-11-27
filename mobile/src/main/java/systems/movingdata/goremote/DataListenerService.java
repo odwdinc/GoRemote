@@ -115,7 +115,7 @@ public class DataListenerService extends WearableListenerService {
 
             if (!Connected) {
                 String Sdata = new String(messageEvent.getData(), Charset.forName("UTF-8"));
-                LOGD(TAG, "Sdata: " + Sdata);
+                //LOGD(TAG, "Sdata: " + Sdata);
                 LOGD(TAG, "onClick startConection: ");
                 startConection(Integer.parseInt(Sdata));
                 Connected = true;
