@@ -3,6 +3,7 @@ package systems.movingdata.goremote;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -25,7 +27,9 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class MainActivity extends Activity {
@@ -38,6 +42,7 @@ public class MainActivity extends Activity {
     Spinner sSpinner;
     int ItemSelected;
     Button ConectSend;
+    private HashMap<String, Integer> WifiMap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,8 +55,7 @@ public class MainActivity extends Activity {
         ConectSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "onClick "+ItemSelected);
-                new SendActivityPhoneMessage("onClick",""+ItemSelected).start();
+                new SendActivityPhoneMessage("/onClick",""+ItemSelected).start();
             }
 
             });
@@ -60,15 +64,40 @@ public class MainActivity extends Activity {
                 .addConnectionCallbacks(new ConnectionCallbacks())
                 .addOnConnectionFailedListener(new ConnectionFailedListener())
                 .build();
+        SharedPreferences settings = getSharedPreferences("Test", Context.MODE_PRIVATE);
+        int GoProWifiID = settings.getInt("GoProWifiID", -1);
+        boolean Connected = settings.getBoolean("Connected", false);
+        if (Connected){
+            updateMessage("Syncing Status... Disconect");
+        }
+        WifiMap = new HashMap<String,Integer>();
 
         getCurrentSsid();
+        if(WifiMap.containsValue(GoProWifiID)){
 
+            String myString = getKeyByValue(WifiMap, GoProWifiID);
+            Log.d(TAG, "Found Saved Conection: "+ myString);
+            ArrayAdapter myAdap = (ArrayAdapter) sSpinner.getAdapter();
+            int spinnerPosition = myAdap.getPosition(myString);
+            sSpinner.setSelection(spinnerPosition);
+            //new SendActivityPhoneMessage("onClick",""+ItemSelected).start();
+        }
+    }
+
+
+    public static <T, E> T getKeyByValue(Map<T, E> map, E value) {
+        for (Map.Entry<T, E> entry : map.entrySet()) {
+            if (value.equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
 
     @Override
     protected void onNewIntent(Intent intent) {
-        Bundle extras = intent.getExtras();
+        //Bundle extras = intent.getExtras();
     }
 
 
@@ -133,10 +162,6 @@ public class MainActivity extends Activity {
             // empty
         }
     }
-
-
-
-
 
 
 
@@ -222,22 +247,31 @@ public class MainActivity extends Activity {
 
         // List stored networks
         List<WifiConfiguration> configs = wifiManager.getConfiguredNetworks();
+
         ArrayList<String> Wifilist = new ArrayList<String>();
         for (WifiConfiguration config : configs) {
 
             Log.v(TAG, "networkId:" + config.networkId);
             Wifilist.add(config.SSID);
+            WifiMap.put(config.SSID, config.networkId);
         }
+
         ArrayAdapter<String> dataAdapter = new ArrayAdapter<String>
                 (this, android.R.layout.simple_list_item_activated_1,Wifilist);
         dataAdapter.setDropDownViewResource
                 (android.R.layout.simple_spinner_dropdown_item);
         sSpinner.setAdapter(dataAdapter);
+
         sSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
-                Log.v(TAG, "onItemSelected: \n" + i + ":" + l);
-                ItemSelected = i;
+
+
+                TextView textView = (TextView)view;
+                String result = textView.getText().toString();
+                ItemSelected = WifiMap.get(result);
+
+                Log.v(TAG, "onItemSelected: " + result + ":" + ItemSelected);
 
             }
 
