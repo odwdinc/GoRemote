@@ -34,8 +34,8 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 
 /**
  * Created by asprayx on 11/11/2014.
@@ -89,40 +89,19 @@ public class DataManager implements
 
         mVibrator = (Vibrator) ParentActivity.getSystemService(Context.VIBRATOR_SERVICE);
         handler = new Handler();
-        if(!DataBul.containsKey("Started")){
-            handler.postDelayed(SoGo, 1000);
-        }
+
 
     }
 
 
-    Runnable SoGo = new Runnable() {
-        @Override
-        public void run() {
-            new SGoPo().execute();
-        }
-    };
 
     private class SGoPo extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... args) {
-            if(StatusOverlay.getVisibility() == View.VISIBLE){
-                Wearable.MessageApi.sendMessage(mGoogleApiClient,getRemoteNodeId(),START_ACTIVITY_PATH,new byte[0]).setResultCallback(
-                        new ResultCallback<MessageApi.SendMessageResult>() {
-                            @Override
-                            public void onResult(MessageApi.SendMessageResult sendMessageResult) {
-                                if (!sendMessageResult.getStatus().isSuccess()) {
-                                    Log.e(ParentActivity.TAG, "Failed to send message with status code: "
-                                            + sendMessageResult.getStatus().getStatusCode());
-                                } else {
-                                    Log.i(ParentActivity.TAG, "Sent Good");
-                                }
-                            }
-                        }
-                );
-            }else{
-                Log.i(ParentActivity.TAG, "Good Link");
-            }
+                Collection<String> nodes = getNodes();
+                for (String node : nodes) {
+                    sendMessage(node, START_ACTIVITY_PATH);
+                }
             return null;
         }
     }
@@ -174,17 +153,18 @@ public class DataManager implements
         });
     }
 
-    public String getRemoteNodeId() {
+
+
+    private Collection<String> getNodes() {
         HashSet<String> results = new HashSet<String>();
-        NodeApi.GetConnectedNodesResult nodesResult =
+        NodeApi.GetConnectedNodesResult nodes =
                 Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
-        List<Node> nodes = nodesResult.getNodes();
-        if(nodes != null) {
-            if (nodes.size() > 0) {
-                return nodes.get(0).getId();
-            }
+
+        for (Node node : nodes.getNodes()) {
+            results.add(node.getId());
         }
-        return null;
+
+        return results;
     }
 
     public void showNotification() {
@@ -580,14 +560,17 @@ public class DataManager implements
         @Override
         public void run() {
             Log.v(ParentActivity.TAG, "doing work in Thread");
-            sendMessage(getRemoteNodeId(),this.button);
+            Collection<String> nodes = getNodes();
+            for (String node : nodes) {
+                sendMessage(node,"/remote/"+this.button);
+            }
         }
     }
-    private void sendMessage(String node,int button) {
+    private void sendMessage(String node,String cmd) {
 
 
         Wearable.MessageApi.sendMessage(
-                mGoogleApiClient, node, "/remote/"+button, new byte[0]).setResultCallback(
+                mGoogleApiClient, node, cmd, new byte[0]).setResultCallback(
                 new ResultCallback<MessageApi.SendMessageResult>() {
                     @Override
                     public void onResult(MessageApi.SendMessageResult sendMessageResult) {
@@ -619,6 +602,15 @@ public class DataManager implements
                 RecordingTime = (TextView) stub.findViewById(R.id.RecordingTime);
 
                 StatusOverlay = (TextView)stub.findViewById(R.id.StatusOverlay);
+
+                StatusOverlay.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+
+                        new SGoPo().execute();
+
+                    }
+                });
 
                 SecrenLayout = (GridLayout) stub.findViewById(R.id.SecrenLayout);
 
